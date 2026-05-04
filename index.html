@@ -1,1 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>PT_Dave Physio Track</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
+    * { font-family: 'Inter', sans-serif; }
+
+    body {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      min-height: 100vh;
+      margin: 0;
+      padding: 16px;
+    }
+
+    /* Glassmorphism effect for cards */
+    .glass {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 1rem;
+    }
+
+    .gradient-text {
+      background: linear-gradient(90deg, #38bdf8 0%, #2dd4bf 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .progress-ring {
+      transform: rotate(-90deg);
+      transition: stroke-dashoffset 0.5s ease;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #0ea5e9 0%, #14b8a6 100%);
+      box-shadow: 0 4px 14px 0 rgba(14, 165, 233, 0.4);
+      transition: all 0.3s ease;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px 0 rgba(14, 165, 233, 0.5);
+    }
+
+    .exercise-card {
+      animation: fadeInUp 0.4s ease forwards;
+      opacity: 0;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .timer-display {
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.05em;
+    }
+
+    /* Custom scrollbar for exercise list */
+    .scroll-container {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,0.2) transparent;
+    }
+    .scroll-container::-webkit-scrollbar {
+      width: 4px;
+    }
+    .scroll-container::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .scroll-container::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.2);
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="text-slate-100 antialiased">
+
+  <div id="app" class="max-w-md mx-auto space-y-5">
+    
+    <!-- Header with Title and Streak -->
+    <div class="flex items-center justify-between mb-4">
+      <h1 class="text-2xl font-extrabold">
+        <span class="gradient-text">PT_Dave</span>
+        <span class="text-white"> Physio Track</span>
+      </h1>
+      <div class="flex items-center gap-2 glass px-3 py-2 rounded-full">
+        <i class="fas fa-fire text-orange-400"></i>
+        <span id="streak-count" class="font-bold text-white">0</span>
+        <span class="text-xs text-slate-400">DAY STREAK</span>
+      </div>
+    </div>
+
+    <!-- Today's Progress Section -->
+    <div class="glass p-4">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-lg font-semibold text-slate-200">Today's Progress</h2>
+        <span id="progress-percentage" class="text-2xl font-bold text-teal-400">0%</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <!-- Circular Progress Bar -->
+        <div class="relative w-20 h-20">
+          <svg class="w-full h-full" viewBox="0 0 36 36">
+            <path class="text-slate-700" stroke="currentColor" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            <path id="progress-circle" class="text-teal-400 progress-ring" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+          </svg>
+          <span id="progress-text" class="absolute inset-0 flex items-center justify-center text-sm font-bold">0/0</span>
+        </div>
+        <div>
+          <p id="completed-count" class="text-slate-300 text-sm">0 of 0 exercises done</p>
+          <p id="plan-status" class="text-xs text-slate-500 mt-1">No plan selected</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Weekly Stats -->
+    <div class="glass p-4">
+      <h2 class="text-lg font-semibold text-slate-200 mb-3">Weekly Stats</h2>
+      <div class="grid grid-cols-3 gap-2 text-center">
+        <div>
+          <p class="text-2xl font-bold text-orange-400" id="avg-pain">--</p>
+          <p class="text-xs text-slate-400">Avg Pain Level</p>
+        </div>
+        <div>
+          <p class="text-2xl font-bold text-sky-400" id="sessions-week">0</p>
+          <p class="text-xs text-slate-400">Sessions This Week</p>
+        </div>
+        <div>
+          <p class="text-2xl font-bold text-emerald-400" id="completion-rate">0%</p>
+          <p class="text-xs text-slate-400">Completion Rate</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Condition Selector -->
+    <div class="glass p-4">
+      <label class="block text-sm font-medium text-slate-300 mb-2">Select Your Condition</label>
+      <select id="condition-select" class="w-full bg-slate-700 border border-slate-600 text-white rounded-lg px-3 py-2 focus:outline-none focus:border-sky-500">
+        <option value="">-- Choose a condition --</option>
+        <option value="knee">Knee Rehabilitation</option>
+        <option value="shoulder">Shoulder Recovery</option>
+        <option value="back">Lower Back Pain</option>
+        <option value="neck">Neck & Posture</option>
+      </select>
+    </div>
+
+    <!-- Today's Exercises -->
+    <div id="exercises-container" class="glass p-4">
+      <h2 class="text-lg font-semibold text-slate-200 mb-3">Today's Exercises</h2>
+      <p id="no-exercise-msg" class="text-slate-400 text-sm">Select a condition to see your exercises</p>
+      <div id="exercise-list" class="space-y-3 max-h-64 overflow-y-auto scroll-container pr-1"></div>
+    </div>
+
+    <!-- Timer Section (for the active exercise) -->
+    <div id="timer-section" class="glass p-4 hidden">
+      <div class="flex items-center justify-between">
+        <div>
+          <p id="current-exercise-name" class="font-semibold text-white">Exercise Name</p>
+          <p class="text-xs text-slate-400">Set <span id="current-set">1</span> of <span id="total-sets">3</span></p>
+        </div>
+        <div class="flex items-center gap-3">
+          <span id="timer-display" class="text-3xl font-bold timer-display text-teal-400">0:30</span>
+          <button id="timer-btn" class="btn-primary px-4 py-2 rounded-lg">
+            <i class="fas fa-play"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pain Level Input -->
+    <div id="pain-section" class="glass p-4 hidden">
+      <label class="block text-sm font-medium text-slate-300 mb-2">Pain Level (0-10)</label>
+      <input type="range" id="pain-slider" min="0" max="10" value="0" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-teal-400">
+      <div class="flex justify-between text-xs text-slate-500 mt-1">
+        <span>No Pain</span>
+        <span>Worst Pain</span>
+      </div>
+    </div>
+
+    <!-- Complete Session Button -->
+    <button id="complete-session-btn" class="btn-primary w-full py-3 rounded-lg text-lg">
+      Complete Today's Session
+    </button>
+
+  </div>
+
+  <script>
+    (function() {
+      // --- App State ---
+      const state = {
+        streak: parseInt(localStorage.getItem('pt_streak') || '0'),
+        completedExercises: JSON.parse(localStorage.getItem('pt_completed') || '[]'),
+        painLog: JSON.parse(localStorage.getItem('pt_painLog') || '[]'),
+      };
+
+      // --- Exercise Data (by condition) ---
+      const exerciseData = {
+        knee: [
+          { name: "Quad Sets", duration: 30, sets: 3 },
+          { name: "Straight Leg Raises", duration: 45, sets: 3 },
+          { name: "Hamstring Stretch", duration: 30, sets: 2 },
+          { name: "Calf Raises", duration: 30, sets: 3 }
+        ],
+        shoulder: [
+          { name: "Pendulum Swings", duration: 30, sets: 3 },
+          { name: "Wall Slides", duration: 45, sets: 3 },
+          { name: "External Rotation", duration: 30, sets: 2 },
+          { name: "Scapular Squeezes", duration: 30, sets: 3 }
+        ],
+        back: [
+          { name: "Pelvic Tilts", duration: 30, sets: 3 },
+          { name: "Cat-Cow Stretch", duration: 45, sets: 3 },
+          { name: "Child's Pose", duration: 60, sets: 2 },
+          { name: "Bridging", duration: 30, sets: 3 }
+        ],
+        neck: [
+          { name: "Chin Tucks", duration: 30, sets: 3 },
+          { name: "Neck Rotations", duration: 30, sets: 2 },
+          { name: "Shoulder Rolls", duration: 45, sets: 3 },
+          { name: "Upper Trap Stretch", duration: 30, sets: 3 }
+        ]
+      };
+
+      // --- Timer Variables ---
+      let timerInterval = null;
+      let timerSeconds = 0;
+      let timerActive = false;
+
+      // --- DOM Elements ---
+      const streakCountEl = document.getElementById('streak-count');
+      const progressPercentageEl = document.getElementById('progress-percentage');
+      const progressCircleEl = document.getElementById('progress-circle');
+      const progressTextEl = document.getElementById('progress-text');
+      const completedCountEl = document.getElementById('completed-count');
+      const planStatusEl = document.getElementById('plan-status');
+      const avgPainEl = document.getElementById('avg-pain');
+      const sessionsWeekEl = document.getElementById('sessions-week');
+      const completionRateEl = document.getElementById('completion-rate');
+      const conditionSelect = document.getElementById('condition-select');
+      const exerciseListEl = document.getElementById('exercise-list');
+      const noExerciseMsg = document.getElementById('no-exercise-msg');
+      const timerSection = document.getElementById('timer-section');
+      const currentExerciseNameEl = document.getElementById('current-exercise-name');
+      const currentSetEl = document.getElementById('current-set');
+      const totalSetsEl = document.getElementById('total-sets');
+      const timerDisplayEl = document.getElementById('timer-display');
+      const timerBtn = document.getElementById('timer-btn');
+      const painSection = document.getElementById('pain-section');
+      const painSlider = document.getElementById('pain-slider');
+      const completeSessionBtn = document.getElementById('complete-session-btn');
+
+      // --- Helper Functions ---
+      function saveState() {
+        localStorage.setItem('pt_streak', state.streak);
+        localStorage.setItem('pt_completed', JSON.stringify(state.completedExercises));
+        localStorage.setItem('pt_painLog', JSON.stringify(state.painLog));
+      }
+
+      function updateUI() {
+        // Streak
+        streakCountEl.textContent = state.streak;
+
+        // Progress
+        const totalExercises = document.querySelectorAll('.exercise-checkbox').length;
+        const completedCount = state.completedExercises.length;
+        const percentage = totalExercises > 0 ? Math.round((completedCount / totalExercises) * 100) : 0;
+        
+        progressPercentageEl.textContent = percentage + '%';
+        progressTextEl.textContent = completedCount + '/' + totalExercises;
+        completedCountEl.textContent = completedCount + ' of ' + totalExercises + ' exercises done';
+        
+        // Update progress circle
+        const circumference = 100; // matches dasharray
+        const offset = circumference - (percentage / 100) * circumference;
+        progressCircleEl.style.strokeDashoffset = offset;
+
+        // Plan status
+        if (conditionSelect.value) {
+          planStatusEl.textContent = 'Active Plan: ' + conditionSelect.options[conditionSelect.selectedIndex].text;
+        } else {
+          planStatusEl.textContent = 'No plan selected';
+        }
+
+        // Weekly stats
+        const avgPain = calculateAveragePain();
+        avgPainEl.textContent = avgPain !== null ? avgPain.toFixed(1) : '--';
+        
+        const sessionsThisWeek = getSessionsThisWeek();
+        sessionsWeekEl.textContent = sessionsThisWeek;
+        
+        const completionRate = calculateWeeklyCompletionRate();
+        completionRateEl.textContent = completionRate + '%';
+      }
+
+      function calculateAveragePain() {
+        const now = new Date();
+        const weekAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
+        const recentLogs = state.painLog.filter(log => new Date(log.date) >= weekAgo);
+        if (recentLogs.length === 0) return null;
+        const sum = recentLogs.reduce((acc, log) => acc + log.level, 0);
+        return sum / recentLogs.length;
+      }
+
+      function getSessionsThisWeek() {
+        // Count unique dates in completedExercises within the last 7 days
+        const now = new Date();
+        const weekAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
+        const recentDates = new Set();
+        state.completedExercises.forEach(id => {
+          // In a real app, store completion timestamps. For simplicity, we'll just count sessions.
+          recentDates.add(new Date().toDateString()); // all today
+        });
+        return recentDates.size; // simplified
+      }
+
+      function calculateWeeklyCompletionRate() {
+        // Simplified: if no exercises assigned, return 0
+        const totalExercises = document.querySelectorAll('.exercise-checkbox').length;
+        if (totalExercises === 0) return 0;
+        const completedCount = state.completedExercises.length;
+        return Math.round((completedCount / totalExercises) * 100);
+      }
+
+      function renderExercises(exercises) {
+        exerciseListEl.innerHTML = '';
+        if (!exercises || exercises.length === 0) {
+          noExerciseMsg.classList.remove('hidden');
+          timerSection.classList.add('hidden');
+          painSection.classList.add('hidden');
+          return;
+        }
+        noExerciseMsg.classList.add('hidden');
+        
+        exercises.forEach((exercise, index) => {
+          const card = document.createElement('div');
+          card.className = 'exercise-card glass p-3 flex items-center justify-between';
+          card.style.animationDelay = (index * 0.1) + 's';
+          
+          const leftDiv = document.createElement('div');
+          leftDiv.className = 'flex items-center gap-3';
+          
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.className = 'exercise-checkbox w-5 h-5 accent-teal-400 cursor-pointer';
+          checkbox.dataset.exerciseId = exercise.name;
+          checkbox.checked = state.completedExercises.includes(exercise.name);
+          
+          checkbox.addEventListener('change', (e) => {
+            if (e.target.checked) {
+              if (!state.completedExercises.includes(exercise.name)) {
+                state.completedExercises.push(exercise.name);
+              }
+            } else {
+              state.completedExercises = state.completedExercises.filter(id => id !== exercise.name);
+            }
+            saveState();
+            updateUI();
+          });
+          
+          const label = document.createElement('label');
+          label.className = 'text-sm font-medium text-white';
+          label.textContent = exercise.name;
+          
+          leftDiv.appendChild(checkbox);
+          leftDiv.appendChild(label);
+          
+          const rightDiv = document.createElement('div');
+          rightDiv.className = 'flex items-center gap-2 text-xs text-slate-400';
+          
+          const setsSpan = document.createElement('span');
+          setsSpan.textContent = exercise.sets + ' sets';
+          
+          const durationSpan = document.createElement('span');
+          durationSpan.textContent = exercise.duration + 's';
+          
+          const playBtn = document.createElement('button');
+          playBtn.className = 'text-teal-400 hover:text-teal-300';
+          playBtn.innerHTML = '<i class="fas fa-play"></i>';
+          playBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            startTimer(exercise);
+          });
+          
+          rightDiv.appendChild(setsSpan);
+          rightDiv.appendChild(durationSpan);
+          rightDiv.appendChild(playBtn);
+          
+          card.appendChild(leftDiv);
+          card.appendChild(rightDiv);
+          exerciseListEl.appendChild(card);
+        });
+
+        // Show pain section when exercises are loaded
+        painSection.classList.remove('hidden');
+        // Hide timer initially
+        timerSection.classList.add('hidden');
+        
+        updateUI();
+      }
+
+      // --- Timer Functions ---
+      function startTimer(exercise) {
+        // Stop any existing timer
+        if (timerInterval) {
+          clearInterval(timerInterval);
+          timerInterval = null;
+        }
+        
+        timerSeconds = exercise.duration;
+        timerActive = true;
+        
+        currentExerciseNameEl.textContent = exercise.name;
+        currentSetEl.textContent = '1';
+        totalSetsEl.textContent = exercise.sets;
+        timerDisplayEl.textContent = formatTime(timerSeconds);
+        timerBtn.innerHTML = '<i class="fas fa-pause"></i>';
+        
+        timerSection.classList.remove('hidden');
+        
+        timerInterval = setInterval(() => {
+          if (timerSeconds <= 0) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            timerActive = false;
+            timerDisplayEl.textContent = '0:00';
+            timerBtn.innerHTML = '<i class="fas fa-play"></i>';
+            // Optional: play a sound or vibrate (if supported)
+            if (navigator.vibrate) {
+              navigator.vibrate(200);
+            }
+            return;
+          }
+          timerSeconds--;
+          timerDisplayEl.textContent = formatTime(timerSeconds);
+        }, 1000);
+      }
+
+      function formatTime(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return mins + ':' + (secs < 10 ? '0' : '') + secs;
+      }
+
+      timerBtn.addEventListener('click', () => {
+        if (timerActive) {
+          // Pause
+          clearInterval(timerInterval);
+          timerInterval = null;
+          timerActive = false;
+          timerBtn.innerHTML = '<i class="fas fa-play"></i>';
+        } else {
+          // Resume
+          if (timerSeconds > 0) {
+            timerActive = true;
+            timerBtn.innerHTML = '<i class="fas fa-pause"></i>';
+            timerInterval = setInterval(() => {
+              if (timerSeconds <= 0) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                timerActive = false;
+                timerDisplayEl.textContent = '0:00';
+                timerBtn.innerHTML = '<i class="fas fa-play"></i>';
+                if (navigator.vibrate) {
+                  navigator.vibrate(200);
+                }
+                return;
+              }
+              timerSeconds--;
+              timerDisplayEl.textContent = formatTime(timerSeconds);
+            }, 1000);
+          }
+        }
+      });
+
+      // --- Session Completion ---
+      completeSessionBtn.addEventListener('click', () => {
+        // Check if at least one exercise is completed
+        if (state.completedExercises.length === 0) {
+          alert('Please complete at least one exercise before finishing the session.');
+          return;
+        }
+        
+        // Log pain level
+        const painLevel = parseInt(painSlider.value);
+        state.painLog.push({
+          date: new Date().toISOString(),
+          level: painLevel
+        });
+        
+        // Update streak
+        state.streak += 1;
+        saveState();
+        
+        // Reset for next day (in a real app, you'd check date)
+        state.completedExercises = [];
+        saveState();
+        
+        // Clear selections
+        conditionSelect.value = '';
+        exerciseListEl.innerHTML = '';
+        noExerciseMsg.classList.remove('hidden');
+        timerSection.classList.add('hidden');
+        painSection.classList.add('hidden');
+        
+        updateUI();
+        alert('Session completed! Great job!');
+      });
+
+      // --- Event Listeners ---
+      conditionSelect.addEventListener('change', (e) => {
+        const condition = e.target.value;
+        if (condition && exerciseData[condition]) {
+          renderExercises(exerciseData[condition]);
+        } else {
+          exerciseListEl.innerHTML = '';
+          noExerciseMsg.classList.remove('hidden');
+          timerSection.classList.add('hidden');
+          painSection.classList.add('hidden');
+          updateUI();
+        }
+      });
+
+      // --- Initial Load ---
+      updateUI();
+    })();
+  </script>
+</body>
+</html>
